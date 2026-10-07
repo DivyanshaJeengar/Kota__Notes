@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>1D Motion Lab</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+:root{--bg:#eef3f8;--panel:#fff;--ink:#14213d;--mute:#5b6b85;--line:#cfd9e6;--x:#0b7a75;--v:#d98200;--a:#b5307a;--cart:#14213d;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1726;--panel:#172238;--ink:#e8eefb;--mute:#93a3c2;--line:#2b3b5c;--x:#3ed2c8;--v:#ffb340;--a:#ff7ac0;--cart:#e8eefb}}
+:root[data-theme="dark"]{--bg:#0f1726;--panel:#172238;--ink:#e8eefb;--mute:#93a3c2;--line:#2b3b5c;--x:#3ed2c8;--v:#ffb340;--a:#ff7ac0;--cart:#e8eefb}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 "IBM Plex Sans",system-ui,sans-serif}
+main{max-width:980px;margin:0 auto;padding:20px 16px 40px}
+h1{font-size:1.7rem;margin:0 0 4px;font-weight:600;letter-spacing:-.01em}
+.sub{color:var(--mute);margin:0 0 18px;max-width:60ch}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px;margin-bottom:14px}
+canvas{display:block;width:100%}
+#track{height:150px}
+.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px 22px}
+.ctl label{display:flex;justify-content:space-between;font-weight:500;font-size:.92rem}
+.ctl output{font-family:"IBM Plex Mono",monospace;font-size:.9rem}
+input[type=range]{width:100%;accent-color:var(--x)}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center}
+button{font:500 .95rem "IBM Plex Sans",sans-serif;padding:8px 16px;border-radius:8px;border:1px solid var(--ink);background:var(--ink);color:var(--bg);cursor:pointer}
+button.alt{background:transparent;color:var(--ink);border-color:var(--line)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--v);outline-offset:2px}
+.presets{display:flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.graphs{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px}
+.graphs canvas{height:180px}
+.gt{font-weight:600;font-size:.9rem;margin-bottom:4px}
+.read{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.read div{border-left:4px solid var(--line);padding-left:10px}
+.read span{display:block;color:var(--mute);font-size:.8rem}
+.read b{font:500 1.15rem "IBM Plex Mono",monospace}
+.eq{font-family:"IBM Plex Mono",monospace;font-size:.88rem;color:var(--mute);margin:0}
+.obs li{margin-bottom:6px;max-width:70ch}
+.q{margin-bottom:14px}.q p{margin:0 0 6px;font-weight:500}
+.q .o{display:flex;gap:6px;flex-wrap:wrap}
+.q button{background:transparent;color:var(--ink);border-color:var(--line)}
+.q button.ok{border-color:var(--x);background:var(--x);color:#fff}.q button.no{border-color:var(--a);color:var(--a)}
+.why{font-size:.9rem;color:var(--mute);margin-top:4px;min-height:1.2em}
+h2{font-size:1.05rem;margin:0 0 8px}
+h3{font-size:.98rem;margin:14px 0 6px}
+#tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}
+#tabs button[aria-pressed=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+details{border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin-bottom:8px}
+summary{cursor:pointer;max-width:75ch}
+summary:focus-visible{outline:3px solid var(--v);outline-offset:2px}
+.sol{margin:8px 0 2px;padding-top:8px;border-top:1px dashed var(--line);color:var(--mute);max-width:75ch}
+</style>
+</head>
+<body>
+<main>
+<h1>1D Motion Lab</h1>
+<p class="sub">Set the starting position, starting velocity and acceleration, then press Play. Watch how the three graphs and the cart relate.</p>
+
+<div class="panel"><canvas id="track" role="img" aria-label="Cart moving along a number line"></canvas></div>
+
+<div class="panel">
+<div class="controls">
+<div class="ctl"><label for="x0">Start position x₀ <output id="o_x0"></output></label><input id="x0" type="range" min="-20" max="20" step="1" value="0"></div>
+<div class="ctl"><label for="v0">Start velocity v₀ <output id="o_v0"></output></label><input id="v0" type="range" min="-10" max="10" step="0.5" value="4"></div>
+<div class="ctl"><label for="a">Acceleration a <output id="o_a"></output></label><input id="a" type="range" min="-4" max="4" step="0.25" value="0"></div>
+<div class="ctl"><label for="t">Time t <output id="o_t"></output></label><input id="t" type="range" min="0" max="10" step="0.05" value="0"></div>
+</div>
+<div class="btns">
+<button id="play">Play</button><button id="reset" class="alt">Reset</button>
+<div class="presets" role="group" aria-label="Examples">
+<button class="alt" data-p="0,5,0">Constant speed</button>
+<button class="alt" data-p="0,0,2">Speeding up</button>
+<button class="alt" data-p="0,10,-2">Braking and reversing</button>
+</div>
+</div>
+</div>
+
+<div class="panel"><div class="read">
+<div style="border-color:var(--x)"><span>Position x</span><b id="r_x"></b></div>
+<div style="border-color:var(--v)"><span>Velocity v</span><b id="r_v"></b></div>
+<div style="border-color:var(--a)"><span>Acceleration a</span><b id="r_a"></b></div>
+<div><span>Displacement</span><b id="r_d"></b></div>
+<div><span>Distance travelled</span><b id="r_s"></b></div>
+</div>
+<p class="eq" style="margin-top:10px">x = x₀ + v₀t + ½at² &nbsp; v = v₀ + at &nbsp; v² = v₀² + 2a(x − x₀)</p>
+</div>
+
+<div class="graphs">
+<div class="panel"><div class="gt" style="color:var(--x)">Position (m) vs time (s)</div><canvas id="gx"></canvas></div>
+<div class="panel"><div class="gt" style="color:var(--v)">Velocity (m/s) vs time (s)</div><canvas id="gv"></canvas></div>
+<div class="panel"><div class="gt" style="color:var(--a)">Acceleration (m/s²) vs time (s)</div><canvas id="ga"></canvas></div>
+</div>
+
+<div class="panel obs"><h2>What to observe</h2>
+<ul>
+<li>With a = 0, the x–t graph is a straight line and its slope equals the velocity.</li>
+<li>With a ≠ 0, the x–t graph curves. The slope at any moment is the velocity at that moment.</li>
+<li>The shaded area under the v–t graph equals the displacement. Areas below zero count as negative.</li>
+<li>Try v₀ = 10 and a = −2. The cart stops, turns around and comes back. Compare displacement with distance travelled.</li>
+</ul></div>
+
+<div class="panel obs"><h2>Exam notes and practice (use g = 10 m/s² unless stated)</h2>
+<div id="tabs" role="group" aria-label="Exam level">
+<button class="alt" data-k="b">Boards</button><button class="alt" data-k="m">JEE Main</button><button class="alt" data-k="a">JEE Advanced</button></div>
+<div id="prac"></div></div>
+
+<div class="panel"><h2>Check yourself</h2><div id="quiz"></div></div>
+</main>
+
+<script>
+const $=id=>document.getElementById(id);
+const T=10;
+let t=0,playing=false,last=0;
+const P=()=>({x0:+$('x0').value,v0:+$('v0').value,a:+$('a').value});
+const X=(p,s)=>p.x0+p.v0*s+0.5*p.a*s*s, V=(p,s)=>p.v0+p.a*s;
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const f=(n,d=2)=>(Math.abs(n)<5e-9?0:n).toFixed(d);
+
+function fit(c){const r=window.devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;
+ if(c.width!==Math.round(w*r)){c.width=Math.round(w*r);c.height=Math.round(h*r)}
+ const g=c.getContext('2d');g.setTransform(r,0,0,r,0,0);g.clearRect(0,0,w,h);return[g,w,h]}
+
+function niceStep(span,n){const raw=span/n,m=Math.pow(10,Math.floor(Math.log10(raw))),r=raw/m;
+ return (r<1.5?1:r<3.5?2:r<7.5?5:10)*m}
+
+function range(fn){let lo=0,hi=0;for(let s=0;s<=T+1e-9;s+=0.1){const y=fn(s);lo=Math.min(lo,y);hi=Math.max(hi,y)}
+ if(hi-lo<1){hi+=.5;lo-=.5}const pad=(hi-lo)*.12;return[lo-pad,hi+pad]}
+
+function drawTrack(){
+ const p=P(),[g,w,h]=fit($('track'));
+ const[lo,hi]=range(s=>X(p,s)).map((v,i)=>i?Math.max(v,p.x0+1):Math.min(v,p.x0-1));
+ const m=26,sx=v=>m+(v-lo)/(hi-lo)*(w-2*m),y0=h*.62;
+ g.strokeStyle=css('--mute');g.fillStyle=css('--mute');g.lineWidth=1.5;g.font='12px "IBM Plex Mono",monospace';g.textAlign='center';
+ g.beginPath();g.moveTo(m/2,y0);g.lineTo(w-m/2,y0);g.stroke();
+ const st=niceStep(hi-lo,10);
+ for(let v=Math.ceil(lo/st)*st;v<=hi;v+=st){g.beginPath();g.moveTo(sx(v),y0-5);g.lineTo(sx(v),y0+5);g.stroke();g.fillText(f(v,st<1?1:0),sx(v),y0+20)}
+ // ghost positions each second
+ g.fillStyle=css('--x');
+ for(let s=0;s<=t+1e-9;s+=1){g.globalAlpha=.35;g.beginPath();g.arc(sx(X(p,s)),y0-40,3,0,7);g.fill()}
+ g.globalAlpha=1;
+ // cart
+ const cx=sx(X(p,t)),cw=44,ch=26;
+ g.fillStyle=css('--cart');g.beginPath();g.roundRect(cx-cw/2,y0-ch-8,cw,ch,5);g.fill();
+ g.beginPath();g.arc(cx-12,y0-6,6,0,7);g.arc(cx+12,y0-6,6,0,7);g.fill();
+ // arrows
+ const arrow=(val,k,col,yy)=>{if(Math.abs(val)<.01)return;const L=Math.max(-90,Math.min(90,val*k));
+  g.strokeStyle=g.fillStyle=col;g.lineWidth=3;g.beginPath();g.moveTo(cx,yy);g.lineTo(cx+L,yy);g.stroke();
+  const d=Math.sign(L);g.beginPath();g.moveTo(cx+L,yy);g.lineTo(cx+L-8*d,yy-5);g.lineTo(cx+L-8*d,yy+5);g.fill()};
+ arrow(V(p,t),7,css('--v'),y0-58);arrow(p.a,22,css('--a'),y0-72);
+ g.textAlign='left';g.font='12px "IBM Plex Sans",sans-serif';g.fillStyle=css('--v');g.fillText('velocity',8,16);
+ g.fillStyle=css('--a');g.fillText('acceleration',70,16);g.fillStyle=css('--x');g.fillText('dots: every 1 s',162,16);
+}
+
+function drawGraph(id,fn,col,shade){
+ const[g,w,h]=fit($(id));const[lo,hi]=range(fn),l=38,b=20,tp=8,r=8;
+ const sx=s=>l+s/T*(w-l-r),sy=v=>tp+(hi-v)/(hi-lo)*(h-tp-b);
+ g.font='11px "IBM Plex Mono",monospace';g.lineWidth=1;g.strokeStyle=css('--line');g.fillStyle=css('--mute');
+ g.textAlign='right';const st=niceStep(hi-lo,4);
+ for(let v=Math.ceil(lo/st)*st;v<=hi;v+=st){g.beginPath();g.moveTo(l,sy(v));g.lineTo(w-r,sy(v));g.stroke();g.fillText(f(v,st<1?1:0),l-5,sy(v)+4)}
+ g.textAlign='center';for(let s=0;s<=T;s+=2){g.fillText(s,sx(s),h-5)}
+ g.strokeStyle=css('--mute');g.beginPath();g.moveTo(l,sy(0));g.lineTo(w-r,sy(0));g.stroke();
+ if(shade){g.fillStyle=col;g.globalAlpha=.25;g.beginPath();g.moveTo(sx(0),sy(0));
+  for(let s=0;s<=t+1e-9;s+=0.05)g.lineTo(sx(s),sy(fn(s)));g.lineTo(sx(t),sy(0));g.fill();g.globalAlpha=1}
+ g.strokeStyle=col;g.lineWidth=2.5;g.beginPath();
+ for(let s=0;s<=T+1e-9;s+=0.05)s?g.lineTo(sx(s),sy(fn(s))):g.moveTo(sx(s),sy(fn(s)));g.stroke();
+ g.strokeStyle=css('--mute');g.setLineDash([4,4]);g.lineWidth=1;g.beginPath();g.moveTo(sx(t),tp);g.lineTo(sx(t),h-b);g.stroke();g.setLineDash([]);
+ g.fillStyle=col;g.beginPath();g.arc(sx(t),sy(fn(t)),5,0,7);g.fill();
+}
+
+function update(){
+ const p=P();
+ $('o_x0').textContent=f(p.x0,0)+' m';$('o_v0').textContent=f(p.v0,1)+' m/s';$('o_a').textContent=f(p.a,2)+' m/s²';$('o_t').textContent=f(t,2)+' s';
+ $('t').value=t;
+ let s=0;for(let u=0;u<t;u+=0.01)s+=Math.abs(V(p,u+0.005))*Math.min(0.01,t-u);
+ $('r_x').textContent=f(X(p,t))+' m';$('r_v').textContent=f(V(p,t))+' m/s';$('r_a').textContent=f(p.a)+' m/s²';
+ $('r_d').textContent=f(X(p,t)-p.x0)+' m';$('r_s').textContent=f(s)+' m';
+ drawTrack();
+ drawGraph('gx',u=>X(p,u),css('--x'),false);
+ drawGraph('gv',u=>V(p,u),css('--v'),true);
+ drawGraph('ga',()=>p.a,css('--a'),false);
+}
+
+function loop(ts){if(!playing)return;const dt=Math.min(.05,(ts-last)/1000);last=ts;
+ t+=dt;if(t>=T){t=T;setPlay(false)}update();if(playing)requestAnimationFrame(loop)}
+function setPlay(on){playing=on;$('play').textContent=on?'Pause':'Play';
+ if(on){if(t>=T)t=0;last=performance.now();requestAnimationFrame(loop)}}
+
+$('play').onclick=()=>setPlay(!playing);
+$('reset').onclick=()=>{setPlay(false);t=0;update()};
+['x0','v0','a'].forEach(i=>$(i).oninput=update);
+$('t').oninput=e=>{setPlay(false);t=+e.target.value;update()};
+document.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{
+ const[x,v,a]=b.dataset.p.split(',');$('x0').value=x;$('v0').value=v;$('a').value=a;setPlay(false);t=0;update();setPlay(true)});
+window.addEventListener('resize',update);
+matchMedia('(prefers-color-scheme:dark)').addEventListener('change',update);
+
+const Q=[
+{q:'A cart moves with constant velocity. What does its position–time graph look like?',o:['Straight sloped line','Curve','Horizontal line'],a:0,w:'Constant velocity means position changes at a steady rate, so the slope is constant.'},
+{q:'In a velocity–time graph, what does the area under the curve give?',o:['Acceleration','Displacement','Speed'],a:1,w:'Area = velocity × time summed over the interval, which is displacement.'},
+{q:'v₀ = 10 m/s and a = −2 m/s². At what time does the cart momentarily stop?',o:['2 s','5 s','10 s'],a:1,w:'v = 10 − 2t = 0 gives t = 5 s.'}];
+Q.forEach(k=>{const d=document.createElement('div');d.className='q';
+ d.innerHTML='<p>'+k.q+'</p><div class="o"></div><div class="why" aria-live="polite"></div>';
+ k.o.forEach((t2,i)=>{const b=document.createElement('button');b.textContent=t2;
+  b.onclick=()=>{d.querySelectorAll('button').forEach(x=>x.className='');b.className=i===k.a?'ok':'no';
+   d.querySelector('.why').textContent=i===k.a?'Correct. '+k.w:'Not quite. Try another answer.'};
+  d.querySelector('.o').appendChild(b)});$('quiz').appendChild(d)});
+
+const D={
+b:{t:'Boards (CBSE / state): what examiners reward',n:[
+'Define precisely: distance (scalar, path length), displacement (vector, shortest straight line), speed, velocity, average and instantaneous values.',
+'The three equations v = u + at, s = ut + ½at², v² = u² + 2as hold only for constant acceleration. Learn the graphical derivations (3 marks).',
+'Slope of x–t = velocity. Slope of v–t = acceleration. Area under v–t = displacement.',
+'Always write: given data, formula, substitution with units, final answer with unit and sign.',
+'Free fall: a = g = 9.8 m/s² downward. State your sign convention before solving.',
+'Draw a neat labelled graph or diagram wherever possible. It usually carries marks.'],
+q:[
+['(2) A particle goes 3 m east and then 4 m north. Find the distance and the magnitude and direction of displacement.','Distance = 3 + 4 = 7 m. Displacement = √(3² + 4²) = 5 m, at tan⁻¹(4/3) ≈ 53° north of east.'],
+['(3) Derive v = u + at using a velocity–time graph.','Draw v–t graph as a straight line from (0, u) to (t, v). Acceleration = slope = (v − u)/t. So v = u + at.'],
+['(3) Derive s = ut + ½at² using the v–t graph.','Displacement = area under the graph = trapezium = ½(u + v)t. Put v = u + at: s = ½(2u + at)t = ut + ½at².'],
+['(3) Derive v² = u² + 2as.','From the graph, s = ½(u + v)t and t = (v − u)/a. So s = (v² − u²)/(2a), giving v² = u² + 2as.'],
+['(3) A car starts from rest with acceleration 2 m/s² for 10 s. Find its final velocity and distance covered.','v = 0 + 2 × 10 = 20 m/s. s = ½ × 2 × 10² = 100 m.'],
+['(3) A car at 72 km/h is braked with retardation 5 m/s². Find the stopping time and stopping distance.','u = 72 km/h = 20 m/s. t = 20/5 = 4 s. s = u²/(2a) = 400/10 = 40 m.'],
+['(3) A ball is thrown vertically up at 19.6 m/s (g = 9.8 m/s²). Find the maximum height and total time of flight.','H = u²/(2g) = 19.6 m. Time up = u/g = 2 s, so total flight time = 4 s.'],
+['(3) A stone is dropped from a 78.4 m tower (g = 9.8). Find the time to reach the ground and its speed on landing.','t = √(2h/g) = √16 = 4 s. v = gt = 39.2 m/s.'],
+['(3) A particle moves as x = 5 + 4t − t² (SI units). Find the initial position, initial velocity, acceleration, the time of momentary rest, and the distance and displacement in the first 4 s.','x₀ = 5 m, v₀ = 4 m/s, a = −2 m/s². v = 4 − 2t = 0 at t = 2 s, where x = 9 m. At t = 4 s, x = 5 m. Displacement = 0. Distance = 4 + 4 = 8 m.'],
+['(5) Cars A and B are 200 m apart and move toward each other at 20 m/s and 15 m/s. When and where do they meet?','Relative speed = 35 m/s. t = 200/35 = 40/7 ≈ 5.71 s. Distance from A = 20 × 40/7 ≈ 114.3 m.']]},
+m:{t:'JEE Main: speed and pattern recognition',n:[
+'Distance in the nth second: s_n = u + a(2n − 1)/2. From rest, distances in successive equal seconds are in the ratio 1 : 3 : 5 : 7.',
+'Equal distances at speeds v₁ and v₂: average speed = 2v₁v₂/(v₁ + v₂). Equal times: average speed = (v₁ + v₂)/2.',
+'Vertical throw: H = u²/2g, time of flight = 2u/g, return speed = launch speed.',
+'Distance ≥ |displacement|. They are equal only when there is no reversal. Check for a turning point.',
+'For polynomial x(t): differentiate for v, again for a. Set v = 0 to find turning points.',
+'Chase and meeting problems: use relative velocity and relative acceleration to make it one-body.'],
+q:[
+['A particle starts from rest with a = 2 m/s². Find the distance covered in the 5th second.','s₅ = a(2n − 1)/2 = 2 × 9/2 = 9 m.'],
+['A body covers the first half of a distance at 20 m/s and the second half at 30 m/s. Find the average speed.','2 × 20 × 30/(20 + 30) = 24 m/s.'],
+['A stone is thrown up at 40 m/s. Find the distance and displacement after 6 s.','Rise = 80 m in 4 s, then falls ½ × 10 × 2² = 20 m. Distance = 100 m. Displacement = 80 − 20 = 60 m.'],
+['A particle moves as x = t³ − 3t. Find its acceleration when its velocity is zero (t > 0).','v = 3t² − 3 = 0 gives t = 1 s. a = 6t = 6 m/s².'],
+['A body dropped from rest covers 35 m in its last second. Find the height of the drop.','35 = 10(2n − 1)/2 gives n = 4 s. h = ½ × 10 × 16 = 80 m.'],
+['A car at 30 m/s sees an obstacle 100 m ahead. Reaction time is 0.5 s and braking retardation is 5 m/s². Does it hit? If so, at what speed?','Reaction distance = 15 m. Remaining 85 m. v² = 900 − 2 × 5 × 85 = 50, so it hits at v ≈ 7.1 m/s. (Full stop needs 90 m of braking, only 85 m is left.)'],
+['A v–t graph is a triangle: v rises from 0 to 20 m/s in 5 s, then falls to 0 in 10 s. Find total displacement, average velocity and the two accelerations.','Displacement = ½ × 15 × 20 = 150 m. Average velocity = 150/15 = 10 m/s. Accelerations = +4 m/s² and −2 m/s².'],
+['A ball is thrown vertically down at 20 m/s from a 60 m height. Find the time to reach the ground and the impact speed.','60 = 20t + 5t² gives t² + 4t − 12 = 0, so t = 2 s. v = 20 + 10 × 2 = 40 m/s.'],
+['One body is dropped from a point. A second is dropped from the same point 2 s later. Find their separation 4 s after the first is released.','First: ½ × 10 × 16 = 80 m. Second: ½ × 10 × 4 = 20 m. Separation = 60 m.'],
+['Car A moves at 25 m/s. Car B is 100 m behind, moving at 30 m/s in the same direction. When does B catch A, and how far does B travel?','Relative speed = 5 m/s. t = 100/5 = 20 s. B travels 30 × 20 = 600 m.']]},
+a:{t:'JEE Advanced: calculus and reasoning',n:[
+'Variable acceleration: use a = dv/dt = v dv/dx. Choose the form that matches the given variable (t, x or v).',
+'a(v) problems: separate variables. For a = −kv, v = v₀e^(−kt) and distance to rest = v₀/k, finite even though time is infinite.',
+'Area under a–t gives change in velocity. Area under v–t gives displacement. Slope of v–x is a/v.',
+'Distance needs integration of |v|. Split the interval at every turning point.',
+'Two-particle problems: write the separation as a function of time. Meeting means separation = 0. Use the discriminant to test for existence.',
+'Multiple-correct questions: test each option separately and watch sign conventions.'],
+q:[
+['A particle starts from rest at the origin with a = 2t m/s². Find its displacement in the first 3 s.','v = t². x = t³/3 = 27/3 = 9 m.'],
+['A particle has a = −2v and v₀ = 10 m/s. Find the total distance it travels before coming to rest, and v(t).','a = v dv/dx = −2v gives dv/dx = −2, so x = (10 − v)/2. At v = 0, x = 5 m. Also v = 10e^(−2t).'],
+['A particle moves with v = 3x and starts at x = 1 m. How long does it take to reach x = 2 m?','dx/dt = 3x gives x = e^(3t). e^(3t) = 2 gives t = (ln 2)/3 ≈ 0.23 s.'],
+['Multiple correct: x = t³ − 6t² + 9t (t ≥ 0, SI). (A) v = 0 at t = 1 s and 3 s. (B) Distance in 0–4 s is 12 m. (C) Displacement in 0–4 s is 12 m. (D) a = 0 at t = 2 s.','v = 3t² − 12t + 9, zero at t = 1 and 3: (A) true. x(1) = 4, x(3) = 0, x(4) = 4. Distance = 4 + 4 + 4 = 12 m: (B) true. Displacement = 4 m: (C) false. a = 6t − 12 = 0 at t = 2: (D) true. Answer: A, B, D.'],
+['A is at x = 40 m at rest and accelerates away at 2 m/s². B starts at the origin at constant 12 m/s. Will B catch A? Find the minimum gap.','Gap = 40 + t² − 12t. Discriminant 144 − 160 < 0, so they never meet. Minimum at t = 6 s: gap = 40 + 36 − 72 = 4 m.'],
+['Integer type: Ball P is thrown up at 20 m/s from the ground. Ball Q is dropped from 40 m at the same instant. Find the time at which they meet, in seconds.','Relative approach speed = 20 + 0 = 20 m/s (equal accelerations cancel). t = 40/20 = 2 s. They meet at 20 m height.'],
+['A particle starts from rest. Its a–t graph is +4 m/s² for 0–2 s, 0 for 2–5 s, and −4 m/s² for 5–7 s. Find the total displacement.','v: 0 to 8 m/s (0–2 s), constant 8 (2–5 s), 8 to 0 (5–7 s). Areas: 8 + 24 + 8 = 40 m.'],
+['A balloon rises at 10 m/s. At a height of 75 m, a stone is released. Find the time to reach the ground and the maximum height above ground.','Stone starts with +10 m/s: −75 = 10t − 5t² gives t² − 2t − 15 = 0, so t = 5 s. Extra rise = 100/20 = 5 m, so the maximum height = 80 m.'],
+['A body is dropped from a tower. In the last second it covers 9/25 of the total height. Find the height.','(2n − 1)/n² = 9/25 gives 9n² − 50n + 25 = 0, so n = 5 s (the other root n = 5/9 is rejected). h = ½ × 10 × 25 = 125 m.'],
+['A falling body has a = g − kv with g = 10 m/s² and k = 0.5 s⁻¹. Find the terminal speed and the time to reach half of it, starting from rest.','Terminal speed = g/k = 20 m/s. v = 20(1 − e^(−0.5t)). Half means e^(−0.5t) = ½, so t = 2 ln 2 ≈ 1.39 s.']]}};
+function showTab(k){document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===k));
+ const d=D[k];$('prac').innerHTML='<h3>'+d.t+'</h3><ul>'+d.n.map(x=>'<li>'+x+'</li>').join('')+'</ul><h3>Practice questions (tap to see the solution)</h3>'+
+ d.q.map((q,i)=>'<details><summary><b>Q'+(i+1)+'.</b> '+q[0]+'</summary><p class="sol">'+q[1]+'</p></details>').join('')}
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>showTab(b.dataset.k));
+showTab('b');
+
+update();
+</script>
+</body>
+</html>
