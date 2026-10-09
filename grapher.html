@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Function Grapher Lab</title>
+<style>
+:root{--bg:#eef2fb;--panel:#fff;--ink:#16193a;--mute:#5d6486;--line:#d9def0;--cbg:#fff;--grid:#e6eaf6;--grid2:#c9d0e8;--curve:#6a3df0;--gold:#f0a000;--ca:#f2463a;--cb:#2a78f0;--cc:#13a06f;--shadow:0 6px 24px rgba(40,50,120,.10)}
+@media(prefers-color-scheme:dark){:root{--bg:#0e1124;--panel:#171b38;--ink:#eceefc;--mute:#9ea6d0;--line:#2a3060;--cbg:#11142b;--grid:#1d2247;--grid2:#313a72;--curve:#9b7bff;--gold:#ffc23d;--ca:#ff6b5f;--cb:#6aa2ff;--cc:#3ed8a0;--shadow:0 6px 24px rgba(0,0,0,.35)}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 "Avenir Next","Segoe UI",system-ui,sans-serif;padding:max(14px,env(safe-area-inset-top,0px)) 14px max(18px,env(safe-area-inset-bottom,0px))}
+.top{max-width:1120px;margin:0 auto 14px}
+h1{font:800 clamp(1.7rem,4vw,2.4rem)/1.1 "Avenir Next","Trebuchet MS",system-ui,sans-serif;margin:4px 0 6px;letter-spacing:-.02em}
+h1 i{font-style:normal;background:linear-gradient(90deg,var(--ca),var(--cb),var(--cc));-webkit-background-clip:text;background-clip:text;color:transparent}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:var(--shadow)}
+.card h2{font-size:1rem;margin:0 0 8px}
+.dirs ul{margin:0;padding-left:20px;columns:2 300px;column-gap:28px}
+.dirs li{margin:3px 0;break-inside:avoid}
+.main{display:grid;grid-template-columns:1fr 360px;gap:14px;max-width:1120px;margin:auto}
+@media(max-width:860px){.main{grid-template-columns:1fr}}
+.stack{display:flex;flex-direction:column;gap:14px;min-width:0}
+.eq{font:700 clamp(1.25rem,3.4vw,1.8rem)/1.3 "Cambria Math",Georgia,serif;text-align:center;padding:6px 4px 12px;overflow-x:auto;white-space:nowrap}
+.ka{color:var(--ca)}.kb{color:var(--cb)}.kc{color:var(--cc)}
+.stage{position:relative}
+canvas{width:100%;height:460px;display:block;border-radius:12px;background:var(--cbg);touch-action:none;cursor:grab}
+canvas:active{cursor:grabbing}
+@media(max-width:560px){canvas{height:340px}}
+.zoom{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:6px}
+.zoom button{width:36px;height:36px;padding:0;font-size:1.2rem;line-height:1;border-radius:10px;background:var(--panel);color:var(--ink);border:1px solid var(--line)}
+.hint{font-size:.82rem;color:var(--mute);margin:8px 2px 0}
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tabs button{flex:1;padding:9px 6px;border-radius:10px;border:2px solid var(--line);background:transparent;color:var(--ink);font-weight:700;font-size:.92rem;cursor:pointer}
+.tabs button[aria-pressed=true]{background:var(--curve);border-color:var(--curve);color:#fff}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.row{display:grid;grid-template-columns:34px 1fr 56px 34px;gap:8px;align-items:center;margin:12px 0 4px;padding:6px 8px;border-radius:12px;border:2px solid transparent}
+.row.on{border-color:var(--c);background:color-mix(in srgb,var(--c) 10%,transparent)}
+.knob{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--c);color:#fff;font:800 1.05rem Georgia,serif;font-style:italic}
+.row input{width:100%;accent-color:var(--c);height:26px}
+.row output{font:700 .95rem ui-monospace,Menlo,monospace;text-align:right;color:var(--c)}
+.play{width:34px;height:34px;border-radius:50%;border:2px solid var(--c);background:transparent;color:var(--c);padding:0;font-size:.85rem}
+.play[aria-pressed=true]{background:var(--c);color:#fff}
+.what{font-size:.88rem;color:var(--mute);margin:2px 8px 0 50px;min-height:2.6em}
+.feat{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.f{border:1px solid var(--line);border-radius:10px;padding:6px 10px}
+.f span{display:block;font-size:.76rem;color:var(--mute)}
+.f b{font:700 .98rem Georgia,serif;word-break:break-word}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.btn{padding:9px 14px;border-radius:10px;border:2px solid var(--curve);background:transparent;color:var(--ink);font-weight:700}
+.btn.fill{background:var(--curve);color:#fff}
+.btn:hover{filter:brightness(1.1)}
+.bar{height:14px;border-radius:8px;background:var(--grid);overflow:hidden;margin:10px 0 6px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ca),var(--gold),var(--cc));transition:width .25s}
+.msg{min-height:2.7em;font-size:.92rem}
+.win{animation:pop .5s ease-out}
+@keyframes pop{0%{transform:scale(.9)}60%{transform:scale(1.06)}100%{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.win{animation:none}.bar i{transition:none}}
+.chk{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:.92rem}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>Function Grapher <i>Lab</i></h1>
+  <div class="card dirs">
+    <h2>How to use</h2>
+    <ul>
+      <li>Pick a curve: parabola, sine wave or exponential.</li>
+      <li>Drag the sliders for <b class="ka">a</b>, <b class="kb">b</b>, <b class="kc">c</b>. Each has its own colour in the equation.</li>
+      <li>Press play beside a slider to watch that number animate.</li>
+      <li>Drag the graph to move it. Scroll or use + and − to zoom.</li>
+      <li>Try <b>Match the curve</b> to test yourself.</li>
+      <li>Press <b>Reset</b> to start again.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="main">
+  <div class="stack">
+    <div class="card">
+      <div class="eq" id="eq" aria-live="polite"></div>
+      <div class="stage">
+        <canvas id="cv" role="img" aria-label="Graph of the function"></canvas>
+        <div class="zoom"><button id="zi" aria-label="Zoom in">+</button><button id="zo" aria-label="Zoom out">−</button><button id="zh" aria-label="Centre the graph" title="Centre">⌂</button></div>
+      </div>
+      <p class="hint">Dashed grey: the starting curve. Move your pointer over the graph to read exact values.</p>
+    </div>
+    <div class="card">
+      <h2>Key facts about your curve</h2>
+      <div class="feat" id="feat"></div>
+      <label class="chk"><input type="checkbox" id="pts" checked> Mark key points on the graph</label>
+    </div>
+  </div>
+
+  <div class="stack">
+    <div class="card">
+      <div class="tabs" id="tabs"></div>
+      <div id="rows"></div>
+      <div class="what" id="what"></div>
+      <div class="btns"><button class="btn" id="reset">Reset</button></div>
+    </div>
+    <div class="card">
+      <h2>Match the curve</h2>
+      <div class="msg" id="msg">A gold dashed curve will appear. Change a, b and c until your curve covers it.</div>
+      <div class="bar" aria-hidden="true"><i id="bar"></i></div>
+      <div class="btns">
+        <button class="btn fill" id="newc">New challenge</button>
+        <button class="btn" id="ans" disabled>Show answer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+const TYPES={
+ quad:{name:"Parabola",f:(p,x)=>p.a*x*x+p.b*x+p.c,def:{a:1,b:0,c:0},rg:{a:[-5,5],b:[-10,10],c:[-10,10]},
+  ins:{a:"Opening and width. Bigger |a| is narrower. Negative a flips the parabola upside down.",b:"Slides the vertex sideways. The axis of symmetry is x = −b ÷ 2a.",c:"Where the curve crosses the y-axis. It lifts or lowers the whole graph."}},
+ sine:{name:"Sine wave",f:(p,x)=>p.a*Math.sin(p.b*x+p.c),def:{a:1,b:1,c:0},rg:{a:[-5,5],b:[-5,5],c:[-6.3,6.3]},
+  ins:{a:"Amplitude: how tall the waves are. Negative a flips the wave.",b:"Frequency: how squeezed the waves are. Period = 2π ÷ b.",c:"Phase: slides the wave left or right by c ÷ b."}},
+ exp:{name:"Exponential",f:(p,x)=>p.a*Math.exp(p.b*x)+p.c,def:{a:1,b:0.5,c:0},rg:{a:[-5,5],b:[-2,2],c:[-10,10]},
+  ins:{a:"Starting size and direction. It stretches the curve; negative a flips it.",b:"Growth rate. Positive b grows, negative b decays. Bigger |b| is faster.",c:"Lifts the curve and sets the flat line it approaches: y = c."}}
+};
+const S={t:"quad",p:{...TYPES.quad.def},T:null,last:"a",anim:null,dir:1,hov:null,shown:false,won:false};
+const V={cx:0,cy:0,sc:0};
+const $=i=>document.getElementById(i);
+const nf=n=>{let s=Math.round(n*100)/100;if(Object.is(s,-0)||s===0)s=0;return String(s).replace("-","\u2212")};
+const sg=v=>v<0?"\u2212":"+";
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const fn=(p,x)=>TYPES[S.t].f(p,x);
+
+/* ---------- build controls ---------- */
+const tabs=$("tabs");
+Object.keys(TYPES).forEach(k=>{const b=document.createElement("button");b.textContent=TYPES[k].name;b.dataset.t=k;
+  b.onclick=()=>setType(k);tabs.appendChild(b);});
+const rows=$("rows");
+["a","b","c"].forEach(k=>{
+  const d=document.createElement("div");d.className="row";d.dataset.k=k;d.style.setProperty("--c","var(--c"+k+")");
+  d.innerHTML='<div class="knob">'+k+'</div><input type="range" step="0.1" id="r_'+k+'" aria-label="Value of '+k+'"><output id="o_'+k+'"></output><button class="play" data-k="'+k+'" aria-pressed="false" aria-label="Animate '+k+'">\u25B6</button>';
+  rows.appendChild(d);
+  d.querySelector("input").oninput=e=>{if(S.anim===k)stopAnim();S.p[k]=+e.target.value;S.last=k;update();};
+  d.querySelector(".play").onclick=()=>{S.anim===k?stopAnim():startAnim(k)};
+  d.addEventListener("pointerdown",()=>{S.last=k;marks();});
+});
+function marks(){
+  document.querySelectorAll(".row").forEach(r=>r.classList.toggle("on",r.dataset.k===S.last));
+  $("what").innerHTML='<b class="k'+S.last+'">'+S.last+'</b>: '+TYPES[S.t].ins[S.last];
+}
+function setType(t){
+  stopAnim();S.t=t;S.p={...TYPES[t].def};S.T=null;S.shown=false;S.won=false;S.last="a";
+  tabs.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b.dataset.t===t));
+  ["a","b","c"].forEach(k=>{const r=$("r_"+k),g=TYPES[t].rg[k];r.min=g[0];r.max=g[1];});
+  resetChallengeUI();update();
+}
+
+/* ---------- animation of one coefficient ---------- */
+let raf=0,tPrev=0;
+function startAnim(k){stopAnim();S.anim=k;S.last=k;S.dir=1;
+  document.querySelector('.play[data-k="'+k+'"]').setAttribute("aria-pressed","true");
+  document.querySelector('.play[data-k="'+k+'"]').textContent="\u275A\u275A";
+  tPrev=performance.now();raf=requestAnimationFrame(tick);update();}
+function stopAnim(){cancelAnimationFrame(raf);S.anim=null;
+  document.querySelectorAll(".play").forEach(b=>{b.setAttribute("aria-pressed","false");b.textContent="\u25B6";});}
+function tick(now){
+  const k=S.anim;if(!k)return;
+  const g=TYPES[S.t].rg[k],dt=Math.min(0.05,(now-tPrev)/1000);tPrev=now;
+  let v=S.p[k]+S.dir*(g[1]-g[0])/7*dt;
+  if(v>=g[1]){v=g[1];S.dir=-1}else if(v<=g[0]){v=g[0];S.dir=1}
+  S.p[k]=v;update();raf=requestAnimationFrame(tick);
+}
+
+/* ---------- maths facts ---------- */
+function feat(){
+  const {a,b,c}=S.p,pts=[],rows=[];
+  if(S.t==="quad"){
+    pts.push({x:0,y:c,l:"y-int (0, "+nf(c)+")"});
+    if(Math.abs(a)<1e-9){
+      rows.push(["Shape","a = 0, so this is a straight line"]);
+      if(Math.abs(b)>1e-9){const r=-c/b;rows.push(["Root","x = "+nf(r)]);pts.push({x:r,y:0,l:"root "+nf(r),r:1});}
+      else rows.push(["Root",Math.abs(c)<1e-9?"every x":"none"]);
+    }else{
+      const vx=-b/(2*a),vy=c-b*b/(4*a),D=b*b-4*a*c;
+      rows.push(["Vertex","("+nf(vx)+", "+nf(vy)+")"],["Axis of symmetry","x = "+nf(vx)],["Opens",a>0?"upwards (a > 0)":"downwards (a < 0)"],["y-intercept",nf(c)],
+        ["Discriminant","b\u00B2 \u2212 4ac = "+nf(D)]);
+      pts.push({x:vx,y:vy,l:"vertex ("+nf(vx)+", "+nf(vy)+")",v:1});
+      if(D>=0){const s=Math.sqrt(D),r1=(-b-s)/(2*a),r2=(-b+s)/(2*a);
+        rows.push(["Roots",D<1e-9?"x = "+nf(r1)+" (one)":"x = "+nf(Math.min(r1,r2))+" and "+nf(Math.max(r1,r2))]);
+        pts.push({x:r1,y:0,l:"x = "+nf(r1),r:1});if(D>=1e-9)pts.push({x:r2,y:0,l:"x = "+nf(r2),r:1});}
+      else rows.push(["Roots","none (curve misses the x-axis)"]);
+    }
+  }else if(S.t==="sine"){
+    rows.push(["Amplitude",nf(Math.abs(a))],["Highest / lowest",nf(Math.abs(a))+" / "+nf(-Math.abs(a))]);
+    if(Math.abs(b)>1e-9){const P=2*Math.PI/Math.abs(b);rows.push(["Period",nf(P)],["Shift",nf(-c/b)+(c/b>0?" (left)":c/b<0?" (right)":"")]);
+      let x0=(Math.sign(a||1)*Math.PI/2-c)/b;x0-=P*Math.round(x0/P);pts.push({x:x0,y:Math.abs(a),l:"peak",v:1});}
+    else rows.push(["Period","none (b = 0 is flat)"]);
+    pts.push({x:0,y:fn(S.p,0),l:"y-int "+nf(fn(S.p,0))});
+  }else{
+    rows.push(["y-intercept",nf(a+c)],["Flat line it approaches","y = "+nf(c)],["Behaviour",Math.abs(b)<1e-9?"constant":b>0?(a>0?"grows upward":"grows downward"):(a>0?"decays toward y = c":"rises toward y = c")]);
+    pts.push({x:0,y:a+c,l:"y-int "+nf(a+c)});
+  }
+  return {pts,rows};
+}
+function eqHTML(){
+  const {a,b,c}=S.p,K=(k,v)=>'<span class="k'+k+'">'+nf(v)+'</span>';
+  if(S.t==="quad")return "y = "+K("a",a)+"x\u00B2 "+sg(b)+" "+K("b",Math.abs(b))+"x "+sg(c)+" "+K("c",Math.abs(c));
+  if(S.t==="sine")return "y = "+K("a",a)+" sin("+K("b",b)+"x "+sg(c)+" "+K("c",Math.abs(c))+")";
+  return "y = "+K("a",a)+" \u00B7 e<sup>"+K("b",b)+"x</sup> "+sg(c)+" "+K("c",Math.abs(c));
+}
+
+/* ---------- challenge ---------- */
+const pick=a=>a[Math.floor(Math.random()*a.length)],ri=(lo,hi)=>lo+Math.floor(Math.random()*(hi-lo+1));
+function newChallenge(){
+  let t;
+  if(S.t==="quad")t={a:pick([-2,-1.5,-1,-0.5,0.5,1,1.5,2]),b:ri(-6,6),c:ri(-6,6)};
+  else if(S.t==="sine")t={a:pick([1,1.5,2,3]),b:pick([0.5,1,1.5,2,3]),c:pick([-1.5,-1,-0.5,0,0.5,1,1.5])};
+  else t={a:pick([-2,-1,1,2]),b:pick([-1,-0.5,0.5,1]),c:ri(-3,3)};
+  S.T=t;S.shown=false;S.won=false;$("ans").disabled=false;$("ans").textContent="Show answer";update();
+}
+function resetChallengeUI(){S.T=null;$("ans").disabled=true;$("bar").style.width="0";$("msg").className="msg";
+  $("msg").textContent="A gold dashed curve will appear. Change a, b and c until your curve covers it.";}
+function score(){
+  let e=0,r=0,n=0;
+  for(let x=-6;x<=6.001;x+=0.1){const y=Math.max(-50,Math.min(50,fn(S.p,x))),t=Math.max(-50,Math.min(50,fn(S.T,x)));e+=(y-t)*(y-t);r+=t*t;n++;}
+  const rmse=Math.sqrt(e/n),rms=Math.sqrt(r/n);
+  return 100*Math.exp(-rmse/(0.12*(rms+1)));
+}
+function challengeUI(){
+  if(!S.T)return;
+  const m=score(),pct=Math.round(m);$("bar").style.width=Math.min(100,m)+"%";
+  const msg=$("msg");
+  if(m>=98){msg.textContent="Matched! Your curve covers the target.";if(!S.won){S.won=true;msg.className="msg win";}}
+  else{S.won=false;msg.className="msg";msg.textContent=pct+"% match. "+(pct<40?"Look at where the target crosses the y-axis, then adjust c.":pct<80?"Getting closer. Check the direction and width.":"Almost. Fine-tune with small steps.");}
+  if(S.shown)msg.textContent+=" Answer: a = "+nf(S.T.a)+", b = "+nf(S.T.b)+", c = "+nf(S.T.c);
+}
+
+/* ---------- drawing ---------- */
+const cv=$("cv"),ctx=cv.getContext("2d");
+let W=0,H=0;
+const X=x=>W/2+(x-V.cx)*V.sc,Y=y=>H/2-(y-V.cy)*V.sc;
+function nice(px){const raw=px/V.sc,e=Math.pow(10,Math.floor(Math.log10(raw))),m=raw/e;return (m<=1?1:m<=2?2:m<=5?5:10)*e;}
+function plot(f,color,w,dash){
+  ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=w;ctx.setLineDash(dash||[]);ctx.lineJoin="round";ctx.lineCap="round";
+  let pen=false;
+  for(let px=0;px<=W+1;px+=1.5){const y=f(V.cx+(px-W/2)/V.sc),py=Y(y);
+    if(!isFinite(py)||Math.abs(py)>1e5){pen=false;continue;}
+    pen?ctx.lineTo(px,py):ctx.moveTo(px,py);pen=true;}
+  ctx.stroke();ctx.setLineDash([]);
+}
+function draw(){
+  const dpr=window.devicePixelRatio||1;W=cv.clientWidth;H=cv.clientHeight;
+  if(cv.width!==Math.round(W*dpr)||cv.height!==Math.round(H*dpr)){cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);}
+  if(!V.sc)V.sc=W/22;
+  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
+  const grid=css("--grid"),grid2=css("--grid2"),ink=css("--ink"),mute=css("--mute"),cur=css("--curve"),gold=css("--gold");
+  const step=nice(70),minor=step/(String(step).replace(/[.0e-]/g,"")[0]==="2"?4:5);
+  const x0=V.cx-W/2/V.sc,x1=V.cx+W/2/V.sc,y0=V.cy-H/2/V.sc,y1=V.cy+H/2/V.sc;
+  ctx.lineWidth=1;ctx.strokeStyle=grid;ctx.beginPath();
+  for(let x=Math.ceil(x0/minor)*minor;x<=x1;x+=minor){ctx.moveTo(X(x),0);ctx.lineTo(X(x),H);}
+  for(let y=Math.ceil(y0/minor)*minor;y<=y1;y+=minor){ctx.moveTo(0,Y(y));ctx.lineTo(W,Y(y));}
+  ctx.stroke();ctx.strokeStyle=grid2;ctx.beginPath();
+  for(let x=Math.ceil(x0/step)*step;x<=x1;x+=step){ctx.moveTo(X(x),0);ctx.lineTo(X(x),H);}
+  for(let y=Math.ceil(y0/step)*step;y<=y1;y+=step){ctx.moveTo(0,Y(y));ctx.lineTo(W,Y(y));}
+  ctx.stroke();
+  const ax=Math.max(0,Math.min(W,X(0))),ay=Math.max(0,Math.min(H,Y(0)));
+  ctx.strokeStyle=ink;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(0,Y(0));ctx.lineTo(W,Y(0));ctx.moveTo(X(0),0);ctx.lineTo(X(0),H);ctx.stroke();
+  ctx.fillStyle=mute;ctx.font="12px system-ui";ctx.textAlign="center";
+  const fx=v=>String(parseFloat(v.toPrecision(6))).replace("-","\u2212");
+  const ly=Math.max(16,Math.min(H-6,Y(0)+16));
+  for(let x=Math.ceil(x0/step)*step;x<=x1;x+=step){if(Math.abs(x)<step/2)continue;ctx.fillText(fx(x),X(x),ly);}
+  ctx.textAlign=X(0)<40?"left":"right";const lx=Math.max(4,Math.min(W-4,X(0)+(X(0)<40?6:-6)));
+  for(let y=Math.ceil(y0/step)*step;y<=y1;y+=step){if(Math.abs(y)<step/2)continue;ctx.fillText(fx(y),lx,Y(y)+4);}
+  plot(x=>fn(TYPES[S.t].def,x),mute,2,[6,6]);
+  if(S.T)plot(x=>fn(S.T,x),gold,5,[10,8]);
+  ctx.shadowColor=cur;ctx.shadowBlur=10;plot(x=>fn(S.p,x),cur,4);ctx.shadowBlur=0;
+  if($("pts").checked){
+    ctx.font="600 12px system-ui";ctx.textAlign="left";
+    feat().pts.forEach(p=>{const px=X(p.x),py=Y(p.y);if(px<-20||px>W+20||py<-20||py>H+20)return;
+      ctx.beginPath();ctx.arc(px,py,6,0,7);ctx.fillStyle=p.r?css("--panel"):cur;ctx.fill();ctx.lineWidth=3;ctx.strokeStyle=cur;ctx.stroke();
+      ctx.fillStyle=ink;const tx=px+10>W-120?px-10:px+10;ctx.textAlign=tx<px?"right":"left";ctx.fillText(p.l,tx,py-10);});
+  }
+  if(S.hov!==null){
+    const x=S.hov,y=fn(S.p,x),px=X(x),py=Y(y);
+    ctx.strokeStyle=mute;ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(px,Y(0));ctx.lineTo(px,py);ctx.lineTo(X(0),py);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=gold;ctx.beginPath();ctx.arc(px,py,7,0,7);ctx.fill();ctx.strokeStyle=ink;ctx.lineWidth=2;ctx.stroke();
+    const t="x = "+nf(x)+",  y = "+nf(y);ctx.font="700 13px system-ui";const w=ctx.measureText(t).width+16;
+    let bx=Math.min(W-w-6,Math.max(6,px+12)),by=Math.max(6,Math.min(H-30,py-34));
+    ctx.fillStyle=ink;ctx.beginPath();ctx.roundRect?ctx.roundRect(bx,by,w,24,8):ctx.rect(bx,by,w,24);ctx.fill();
+    ctx.fillStyle=css("--panel");ctx.textAlign="left";ctx.fillText(t,bx+8,by+17);
+  }
+}
+
+/* ---------- update ---------- */
+function update(){
+  ["a","b","c"].forEach(k=>{const r=$("r_"+k);r.value=S.p[k];$("o_"+k).textContent=nf(S.p[k]);});
+  $("eq").innerHTML=eqHTML();marks();
+  $("feat").innerHTML=feat().rows.map(r=>'<div class="f"><span>'+r[0]+'</span><b>'+r[1]+'</b></div>').join("");
+  challengeUI();draw();
+}
+
+/* ---------- pointer: pan, zoom, hover ---------- */
+let drag=null;
+const wx=e=>{const r=cv.getBoundingClientRect();return {px:e.clientX-r.left,py:e.clientY-r.top};};
+cv.addEventListener("pointerdown",e=>{cv.setPointerCapture(e.pointerId);const p=wx(e);drag={x:p.px,y:p.py,cx:V.cx,cy:V.cy,moved:false};});
+cv.addEventListener("pointermove",e=>{
+  const p=wx(e);
+  if(drag&&(Math.abs(p.px-drag.x)>4||Math.abs(p.py-drag.y)>4||drag.moved)){drag.moved=true;V.cx=drag.cx-(p.px-drag.x)/V.sc;V.cy=drag.cy+(p.py-drag.y)/V.sc;S.hov=null;}
+  else S.hov=V.cx+(p.px-W/2)/V.sc;
+  draw();
+});
+cv.addEventListener("pointerup",e=>{if(drag&&!drag.moved){const p=wx(e);S.hov=V.cx+(p.px-W/2)/V.sc;}drag=null;draw();});
+cv.addEventListener("pointerleave",()=>{if(!drag){S.hov=null;draw();}});
+function zoom(f,px,py){const wxv=V.cx+(px-W/2)/V.sc,wyv=V.cy-(py-H/2)/V.sc;
+  V.sc=Math.max(4,Math.min(600,V.sc*f));V.cx=wxv-(px-W/2)/V.sc;V.cy=wyv+(py-H/2)/V.sc;draw();}
+cv.addEventListener("wheel",e=>{e.preventDefault();const p=wx(e);zoom(Math.exp(-e.deltaY*0.0015),p.px,p.py);},{passive:false});
+$("zi").onclick=()=>zoom(1.3,W/2,H/2);$("zo").onclick=()=>zoom(1/1.3,W/2,H/2);
+function home(){V.cx=0;V.cy=0;V.sc=W/22;draw();}
+$("zh").onclick=home;
+$("pts").onchange=draw;
+$("newc").onclick=newChallenge;
+$("ans").onclick=()=>{S.shown=true;challengeUI();};
+$("reset").addEventListener("click",()=>{setType("quad");V.cx=0;V.cy=0;V.sc=W/22;draw();});
+window.addEventListener("resize",draw);
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change",draw);
+setType("quad");
+})();
+</script>
+</body>
+</html>
