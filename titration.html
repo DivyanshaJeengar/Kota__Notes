@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Acid–Base Titration Lab</title>
+<style>
+:root{--bg:#eef2ef;--panel:#fbfcfa;--ink:#14302f;--mute:#5b7370;--line:#cfdad6;--curve:#0f6b66;--dot:#d6336c;--grid:#dde6e2;--glass:#7da39e}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0d1a19;--panel:#142624;--ink:#e3efec;--mute:#9bb5b0;--line:#27403c;--curve:#4fd1c5;--dot:#ff6b9a;--grid:#223835;--glass:#5f8a84}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:max(14px,env(safe-area-inset-top,0px)) 14px max(14px,env(safe-area-inset-bottom,0px))}
+h1{font:600 1.7rem/1.2 Georgia,"Iowan Old Style",serif;margin:4px 0 2px}
+.sub{color:var(--mute);margin:0 0 14px;max-width:62ch}
+.wrap{display:grid;grid-template-columns:minmax(260px,330px) 1fr;gap:14px;max-width:1080px;margin:auto}
+@media(max-width:760px){.wrap{grid-template-columns:1fr}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+.card h2{font:600 1rem/1.3 Georgia,serif;margin:0 0 8px}
+label{display:block;font-size:.9rem;color:var(--mute);margin:10px 0 3px}
+select,input[type=range]{width:100%}
+select{padding:7px;border-radius:6px;border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit}
+.btns{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+button{font:inherit;padding:8px 12px;border-radius:6px;border:1px solid var(--curve);background:transparent;color:var(--ink);cursor:pointer}
+button.main{background:var(--curve);color:#fff}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) button.main{color:#06201d}}
+button:hover{filter:brightness(1.08)}
+:focus-visible{outline:3px solid var(--dot);outline-offset:2px}
+.chk{display:flex;gap:8px;align-items:center;margin:8px 0 0;color:var(--ink);font-size:.92rem}
+.apparatus{display:flex;justify-content:center}
+svg{max-width:100%;height:auto}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+@media(max-width:560px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.stat b{display:block;font:600 1.45rem/1.2 Georgia,serif;font-variant-numeric:tabular-nums}
+.stat span{font-size:.8rem;color:var(--mute)}
+.phbig b{color:var(--dot)}
+canvas{width:100%;height:340px;display:block}
+.note{border-left:4px solid var(--curve);padding:8px 12px;background:var(--bg);border-radius:0 8px 8px 0;margin:10px 0 0;min-height:4.6em}
+ol,ul{margin:6px 0 0;padding-left:20px}
+.dirs ul{columns:2 320px;column-gap:28px}
+li{margin:4px 0}
+.drop{opacity:0}
+.drop.go{animation:fall .45s ease-in}
+@keyframes fall{0%{opacity:1;transform:translateY(0)}90%{opacity:1}100%{opacity:0;transform:translateY(36px)}}
+@media(prefers-reduced-motion:reduce){.drop.go{animation:none}}
+</style>
+</head>
+<body>
+<h1>Acid–Base Titration Lab</h1>
+<p class="sub">Add titrant from the burette and watch the pH curve build.</p>
+<div class="card dirs" style="max-width:1080px;margin:0 auto 14px">
+  <h2>How to use</h2>
+  <ul>
+    <li>Pick the solution, concentration and indicator.</li>
+    <li>Add titrant with the buttons, the slider, or <b>Run</b>.</li>
+    <li>Watch the flask colour and the pH curve change.</li>
+    <li>Find the steep jump: that is the equivalence point.</li>
+    <li>Press <b>Reset</b> to start again.</li>
+  </ul>
+</div>
+
+<div class="wrap">
+<div>
+  <div class="card">
+    <h2>Set up the experiment</h2>
+    <label for="an">Solution in the flask (25 mL)</label>
+    <select id="an">
+      <option value="hcl">HCl, strong acid</option>
+      <option value="hac">Acetic acid, weak acid</option>
+      <option value="naoh">NaOH, strong base</option>
+      <option value="nh3">Ammonia, weak base</option>
+    </select>
+    <label for="ca">Concentration: <b id="caL">0.100</b> M</label>
+    <input type="range" id="ca" min="0.05" max="0.15" step="0.01" value="0.10">
+    <label for="ind">Indicator in the flask</label>
+    <select id="ind">
+      <option value="mo">Methyl orange (pH 3.1 to 4.4)</option>
+      <option value="btb">Bromothymol blue (pH 6.0 to 7.6)</option>
+      <option value="ph" selected>Phenolphthalein (pH 8.2 to 10)</option>
+      <option value="none">No indicator</option>
+    </select>
+    <p style="font-size:.85rem;color:var(--mute);margin:8px 0 0">Titrant: <b id="tn">0.100 M NaOH</b></p>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h2>Burette</h2>
+    <div class="apparatus">
+      <svg viewBox="0 0 220 370" width="210" role="img" aria-label="Burette above a conical flask">
+        <defs><clipPath id="fc"><path id="fp" d="M88 240 L88 282 L46 352 Q42 360 52 360 L168 360 Q178 360 174 352 L132 282 L132 240 Z"/></clipPath>
+        <clipPath id="bc"><rect x="95" y="14" width="30" height="190"/></clipPath></defs>
+        <rect x="95" y="14" width="30" height="190" fill="none" stroke="var(--glass)" stroke-width="2"/>
+        <rect id="liq" x="97" y="14" width="26" height="190" fill="var(--curve)" opacity=".35" clip-path="url(#bc)"/>
+        <g id="ticks" stroke="var(--glass)" stroke-width="1"></g>
+        <rect x="104" y="204" width="12" height="14" fill="var(--glass)"/>
+        <rect x="98" y="210" width="24" height="5" rx="2" fill="var(--dot)"/>
+        <path d="M107 218 L113 218 L110 228 Z" fill="var(--glass)"/>
+        <circle id="drop" class="drop" cx="110" cy="226" r="3.5" fill="var(--curve)"/>
+        <path d="M88 240 L88 282 L46 352 Q42 360 52 360 L168 360 Q178 360 174 352 L132 282 L132 240 Z" fill="none" stroke="var(--glass)" stroke-width="2.5"/>
+        <rect id="fl" x="30" y="296" width="160" height="70" clip-path="url(#fc)" fill="#dfeff2"/>
+        <text x="190" y="30" font-size="11" fill="var(--mute)" text-anchor="end">0</text>
+        <text x="190" y="206" font-size="11" fill="var(--mute)" text-anchor="end">50 mL</text>
+      </svg>
+    </div>
+    <label for="vb">Volume added: <b id="vbL">0.00</b> mL</label>
+    <input type="range" id="vb" min="0" max="50" step="0.05" value="0">
+    <div class="btns">
+      <button data-add="0.05">+0.05</button>
+      <button data-add="0.5">+0.5</button>
+      <button data-add="2">+2</button>
+      <button id="run" class="main">Run</button>
+      <button id="reset">Reset</button>
+    </div>
+    <div class="chk"><input type="checkbox" id="full"><label for="full" style="margin:0;color:inherit">Reveal the full curve (dashed)</label></div>
+    <div class="chk"><input type="checkbox" id="marks" checked><label for="marks" style="margin:0;color:inherit">Mark equivalence points</label></div>
+  </div>
+</div>
+
+<div>
+  <div class="card">
+    <div class="stats">
+      <div class="stat phbig"><b id="sPH">0</b><span>pH now</span></div>
+      <div class="stat"><b id="sV">0</b><span>mL added</span></div>
+      <div class="stat"><b id="sE">0</b><span>mL at equivalence</span></div>
+      <div class="stat"><b id="sP">0%</b><span>neutralised</span></div>
+    </div>
+    <canvas id="cv" role="img" aria-label="Live pH versus volume titration curve"></canvas>
+    <div class="note" id="note" aria-live="polite"></div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <h2>Try these</h2>
+    <ol>
+      <li>Titrate HCl, then acetic acid at the same concentration. Compare the starting pH and the pH at equivalence.</li>
+      <li>On the weak acid, move to exactly half the equivalence volume. The pH there equals the pKa (4.76).</li>
+      <li>Change the indicator. Its shaded colour band on the graph should sit inside the steep jump. Which indicators fail for the weak acid?</li>
+      <li>Double the concentration. What happens to the equivalence volume, but not to the curve's shape?</li>
+    </ol>
+  </div>
+</div>
+</div>
+
+<script>
+(function(){
+var KW=1e-14,CT=0.1,VA=25,VMAX=50;
+var A={
+ hcl:{n:"HCl",type:"acid",pKa:-3,weak:false},
+ hac:{n:"acetic acid",type:"acid",pKa:4.76,weak:true},
+ naoh:{n:"NaOH",type:"base",pKa:20,weak:false},
+ nh3:{n:"ammonia",type:"base",pKa:9.25,weak:true}
+};
+var IND={
+ mo:{lo:3.1,hi:4.4,s:[[3.1,[232,64,42]],[3.75,[240,138,44]],[4.4,[242,210,60]]]},
+ btb:{lo:6,hi:7.6,s:[[6,[242,210,60]],[6.8,[95,179,106]],[7.6,[47,111,208]]]},
+ ph:{lo:8.2,hi:10,s:[[8.2,[223,239,242]],[9.1,[243,166,200]],[10,[224,51,143]]]},
+ none:{lo:null,hi:null,s:[[0,[223,239,242]]]}
+};
+var S={key:"hcl",ca:0.1,ind:"ph",vb:0,run:null};
+var $=function(i){return document.getElementById(i)};
+
+function ka(){return Math.pow(10,-A[S.key].pKa)}
+function ve(){return S.ca*VA/CT}
+function pH(vb){
+  var V=VA+vb,t=CT*vb/V,a=S.ca*VA/V,K=ka(),isA=A[S.key].type==="acid";
+  var lo=-15,hi=1.5,x,h,f;
+  for(var i=0;i<60;i++){
+    x=(lo+hi)/2;h=Math.pow(10,x);
+    f=isA?(h+t-KW/h-a*K/(K+h)):(h+a*h/(K+h)-KW/h-t);
+    if(f>0)hi=x;else lo=x;
+  }
+  var p=-(lo+hi)/2;return Math.max(-0.5,Math.min(14,p));
+}
+function color(p){
+  var s=IND[S.ind].s,i;
+  if(p<=s[0][0])return s[0][1];
+  if(p>=s[s.length-1][0])return s[s.length-1][1];
+  for(i=0;i<s.length-1;i++){
+    if(p<=s[i+1][0]){var u=(p-s[i][0])/(s[i+1][0]-s[i][0]);
+      return s[i][1].map(function(c,j){return Math.round(c+(s[i+1][1][j]-c)*u)});}
+  }
+}
+function fmt(n,d){return n.toFixed(d)}
+
+function note(){
+  var a=A[S.key],isA=a.type==="acid",sp=isA?"acid":"base",T=isA?"NaOH":"HCl",
+      r=S.vb/ve(),p=pH(S.vb);
+  if(S.vb<0.005){
+    return a.weak?"Only the weak "+sp+" is in the flask. It reacts only a little with water, so the pH starts closer to 7 than a strong "+sp+" of the same concentration."
+                 :"A strong "+sp+" is fully ionised, so the pH comes straight from the concentration: pH = "+fmt(p,2)+".";
+  }
+  if(Math.abs(S.vb-ve())<0.026){
+    if(!a.weak)return "Equivalence point: moles of acid equal moles of base. Only salt and water remain, so pH is about 7.";
+    return isA?"Equivalence point: all the acid has become its conjugate base, which reacts with water to make OH\u207B. So the pH is above 7 even though the acid is used up."
+              :"Equivalence point: all the base has become its conjugate acid, which reacts with water to make H\u207A. So the pH is below 7 even though the base is used up.";
+  }
+  if(r>1)return "Past equivalence: extra "+T+" is now in the flask and it sets the pH. The curve flattens out again.";
+  if(r>=0.98)return "Almost there. Very little "+sp+" is left, so a single drop swings the pH a long way. Add 0.05 mL at a time.";
+  if(a.weak){
+    if(Math.abs(r-0.5)<0.03)return "Half-equivalence: half of the "+sp+" is neutralised, so the two forms are equal and pH = pKa = "+fmt(a.pKa,2)+".";
+    return "Buffer region: the flask holds the weak "+sp+" and its conjugate "+(isA?"base":"acid")+". Added "+T+" is used up converting one into the other, so the pH changes slowly.";
+  }
+  return T+" neutralises the "+sp+" one-for-one. Plenty is still left, so the pH rises slowly until we get close to equivalence.";
+}
+
+var cv=$("cv"),ctx=cv.getContext("2d");
+function css(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+function draw(){
+  var dpr=window.devicePixelRatio||1,W=cv.clientWidth,H=cv.clientHeight;
+  cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
+  var L=44,R=14,Tp=14,B=38,pw=W-L-R,ph=H-Tp-B;
+  var X=function(v){return L+v/VMAX*pw},Y=function(p){return Tp+(14-p)/14*ph};
+  ctx.clearRect(0,0,W,H);ctx.font="12px system-ui";ctx.lineWidth=1;
+  var ink=css("--ink"),mute=css("--mute"),grid=css("--grid"),cur=css("--curve"),dot=css("--dot");
+  var ib=IND[S.ind];
+  if(ib.lo!==null){var c=color((ib.lo+ib.hi)/2);ctx.fillStyle="rgba("+c.join(",")+",.28)";ctx.fillRect(L,Y(ib.hi),pw,Y(ib.lo)-Y(ib.hi));}
+  ctx.strokeStyle=grid;ctx.fillStyle=mute;ctx.textAlign="right";
+  for(var p=0;p<=14;p+=2){ctx.beginPath();ctx.moveTo(L,Y(p));ctx.lineTo(L+pw,Y(p));ctx.stroke();ctx.fillText(p,L-6,Y(p)+4);}
+  ctx.textAlign="center";
+  for(var v=0;v<=50;v+=10){ctx.beginPath();ctx.moveTo(X(v),Tp);ctx.lineTo(X(v),Tp+ph);ctx.stroke();ctx.fillText(v,X(v),Tp+ph+16);}
+  ctx.fillStyle=ink;ctx.fillText("Volume of titrant added (mL)",L+pw/2,H-4);
+  ctx.save();ctx.translate(12,Tp+ph/2);ctx.rotate(-Math.PI/2);ctx.fillText("pH",0,0);ctx.restore();
+  ctx.strokeStyle=ink;ctx.strokeRect(L,Tp,pw,ph);
+  function path(to){ctx.beginPath();for(var v=0;v<=to+1e-9;v+=0.1){var q=Math.min(v,to);ctx[v===0?"moveTo":"lineTo"](X(q),Y(pH(q)));}ctx.lineTo(X(to),Y(pH(to)));}
+  if($("full").checked){ctx.setLineDash([5,5]);ctx.strokeStyle=mute;ctx.lineWidth=1.5;path(VMAX);ctx.stroke();ctx.setLineDash([]);}
+  if($("marks").checked){
+    var E=ve(),pe=pH(E);
+    ctx.setLineDash([3,4]);ctx.strokeStyle=mute;ctx.beginPath();ctx.moveTo(X(E),Tp);ctx.lineTo(X(E),Tp+ph);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=ink;ctx.beginPath();ctx.arc(X(E),Y(pe),5,0,7);ctx.fill();
+    ctx.textAlign="left";ctx.fillStyle=ink;ctx.fillText("equivalence, pH "+fmt(pe,1),X(E)+8,Y(pe)+(pe>7?18:-8));
+    if(A[S.key].weak){var h=pH(E/2);ctx.fillStyle=mute;ctx.beginPath();ctx.arc(X(E/2),Y(h),4,0,7);ctx.fill();
+      ctx.fillStyle=ink;ctx.fillText("half-equiv., pH "+fmt(h,1),X(E/2)+8,Y(h)+(A[S.key].type==="acid"?16:-8));}
+  }
+  if(S.vb>0){ctx.strokeStyle=cur;ctx.lineWidth=3;ctx.lineJoin="round";path(S.vb);ctx.stroke();}
+  ctx.fillStyle=dot;ctx.beginPath();ctx.arc(X(S.vb),Y(pH(S.vb)),6,0,7);ctx.fill();
+  ctx.strokeStyle=css("--panel");ctx.lineWidth=2;ctx.stroke();
+}
+
+function flask(){
+  var c=color(pH(S.vb)),lvl=300-Math.min(S.vb,VMAX)*0.12;
+  var fl=$("fl");fl.setAttribute("fill","rgb("+c.join(",")+")");fl.setAttribute("y",lvl);
+  var rem=1-S.vb/VMAX;
+  var liq=$("liq");liq.setAttribute("y",14+190*(1-rem));liq.setAttribute("height",190*rem);
+}
+function update(){
+  $("vb").value=S.vb;$("vbL").textContent=fmt(S.vb,2);
+  $("sV").textContent=fmt(S.vb,2);$("sE").textContent=fmt(ve(),2);
+  $("sPH").textContent=fmt(pH(S.vb),2);
+  $("sP").textContent=Math.min(999,Math.round(S.vb/ve()*100))+"%";
+  $("note").textContent=note();
+  flask();draw();
+}
+function setV(v,drip){
+  S.vb=Math.max(0,Math.min(VMAX,Math.round(v*100)/100));
+  if(drip){var d=$("drop");d.classList.remove("go");void d.getBBox();d.classList.add("go");}
+  update();
+}
+function stop(){if(S.run){clearInterval(S.run);S.run=null;$("run").textContent="Run";}}
+
+(function ticks(){var g=$("ticks"),s="";for(var i=0;i<=10;i++){var y=14+i*19;s+='<line x1="'+(i%5?107:99)+'" x2="125" y1="'+y+'" y2="'+y+'"/>';}g.innerHTML=s;})();
+
+$("an").onchange=function(){stop();S.key=this.value;$("tn").textContent="0.100 M "+(A[S.key].type==="acid"?"NaOH":"HCl");setV(0);};
+$("ca").oninput=function(){S.ca=+this.value;$("caL").textContent=fmt(S.ca,3);update();};
+$("ind").onchange=function(){S.ind=this.value;update();};
+$("vb").oninput=function(){stop();setV(+this.value);};
+document.querySelectorAll("[data-add]").forEach(function(b){b.onclick=function(){stop();setV(S.vb+ +b.dataset.add,true);};});
+$("run").onclick=function(){
+  if(S.run){stop();return;}
+  $("run").textContent="Pause";
+  S.run=setInterval(function(){if(S.vb>=VMAX){stop();return;}
+    var near=Math.abs(S.vb-ve())<2.5;setV(S.vb+(near?0.05:0.25),true);},60);
+};
+$("reset").addEventListener("click",function(){
+  stop();
+  S.key="hcl";S.ca=0.1;S.ind="ph";
+  $("an").value="hcl";$("ca").value="0.10";$("caL").textContent="0.100";
+  $("ind").value="ph";$("full").checked=false;$("marks").checked=true;
+  $("tn").textContent="0.100 M NaOH";
+  setV(0);
+});
+$("full").onchange=draw;$("marks").onchange=draw;
+window.addEventListener("resize",draw);
+if(window.matchMedia)window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change",draw);
+update();
+})();
+</script>
+</body>
+</html>
